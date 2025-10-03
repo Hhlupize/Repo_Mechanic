@@ -103,5 +103,10 @@ Optional TUI:
 - Follow the system rules in `.agents/`.
 - Keep patches minimal and reversible.
 
+## Issues & Roadmap
+- Roadmap: see `ROADMAP.md` for planned enhancements and areas of focus.
+- Open Issues: https://github.com/Hhlupize/Repo_Mechanic/issues
+- Templates: bug reports, feature requests, and tasks are available via the GitHub issue templates.
+
 ## License
 - MIT — see LICENSE
