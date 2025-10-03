@@ -24,7 +24,8 @@ jobs:
         run: uv run black --check .
       - name: Pytest
         run: uv run pytest -q
-      # Demo step removed: repository contains scripts/demo.ps1 (PowerShell) but no scripts/demo.sh
+      - name: Demo
+        run: bash scripts/demo.sh
       - name: Upload receipts
         if: always()
         uses: actions/upload-artifact@v4
