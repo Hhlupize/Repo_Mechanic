@@ -1,15 +1,14 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from .shell import run as shell_run
 
 
-def ensure_env(path: str | Path = ".", requirements: Optional[str] = None) -> Dict[str, object]:
+def ensure_env(path: str | Path = ".", requirements: str | None = None) -> dict[str, object]:
     code = 0
-    out_parts: List[str] = []
-    err_parts: List[str] = []
+    out_parts: list[str] = []
+    err_parts: list[str] = []
 
     res1 = shell_run(["uv", "venv"], cwd=path)
     code = max(code, int(res1.get("code", -1)))

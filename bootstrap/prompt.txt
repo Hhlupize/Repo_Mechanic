@@ -1,0 +1,15 @@
+You are my agentic coding assistant. Load these files in order:
+.agents/system.md
+.agents/project_brief.md
+.agents/constraints.md
+.agents/tools.md
+.agents/milestones.md
+.agents/acceptance.md
+tasks/001_scaffold.md
+
+Then execute Task 001 with the following rules:
+- Work only via unified diffs.
+- After applying diffs, run `uv sync` then `uv run pytest -q`.
+- On success, produce a commit with a clear message and write a summary plan to receipts/.
+Acknowledge with a brief step plan before writing diffs.
+

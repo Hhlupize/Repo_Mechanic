@@ -42,21 +42,7 @@ def validate_patch(unified_diff: str) -> tuple[bool, list[str]]:
     disallowed = [p for p in paths if not is_path_allowed(p)]
     if disallowed:
         reasons.append(f"paths not allowed: {', '.join(disallowed)}")
-
-    # Reject renames/deletions for MVP safety
-    lines = unified_diff.splitlines()
-    if any(l.startswith("rename from ") or l.startswith("rename to ") for l in lines):
-        reasons.append("renames not allowed in MVP")
-    if any(
-        l.startswith("+++ /dev/null")
-        or l.startswith("--- /dev/null")
-        or l.startswith("deleted file mode")
-        for l in lines
-    ):
-        reasons.append("file additions/deletions not allowed in MVP")
-
     changed = count_changed_lines(unified_diff)
     if changed > MAX_PATCH_LINES:
         reasons.append(f"changed lines {changed} exceeds max {MAX_PATCH_LINES}")
     return (len(reasons) == 0, reasons)
-

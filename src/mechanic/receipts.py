@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Iterable, Optional
+from typing import Any
 
 
 def _now_stamp() -> str:
@@ -16,10 +17,10 @@ class ReceiptRun:
     run_dir: Path
     steps_path: Path
     summary_path: Path
-    last_error: Optional[str] = field(default=None, init=False)
+    last_error: str | None = field(default=None, init=False)
 
     @classmethod
-    def start_run(cls, meta: Optional[Dict[str, Any]] = None) -> "ReceiptRun":
+    def start_run(cls, meta: dict[str, Any] | None = None) -> ReceiptRun:
         root = Path("receipts")
         root.mkdir(parents=True, exist_ok=True)
         run_dir = root / _now_stamp()
@@ -31,7 +32,7 @@ class ReceiptRun:
             run.log_event({"type": "meta", **meta})
         return run
 
-    def log_event(self, event: Dict[str, Any]) -> bool:
+    def log_event(self, event: dict[str, Any]) -> bool:
         try:
             line = json.dumps(event, ensure_ascii=False)
             with self.steps_path.open("a", encoding="utf-8") as f:
@@ -51,4 +52,3 @@ class ReceiptRun:
         except Exception as e:
             self.last_error = str(e)
             return False
-

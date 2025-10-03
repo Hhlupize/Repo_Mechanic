@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from .shell import run as shell_run
 
 
-def run(path: str | Path = ".", check: bool = True) -> Dict[str, object]:
+def run(path: str | Path = ".", check: bool = True) -> dict[str, object]:
     args = ["black", str(path)]
     if check:
         args.append("--check")

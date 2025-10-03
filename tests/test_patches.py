@@ -1,4 +1,4 @@
-from mechanic.guards import is_path_allowed, count_changed_lines, validate_patch
+from mechanic.guards import count_changed_lines, is_path_allowed, validate_patch
 
 
 def test_is_path_allowed_basic():
@@ -22,11 +22,10 @@ index 83db48f..bf12d24 100644
 """.strip()
     ok, reasons = validate_patch(diff)
     assert ok, reasons
-    assert count_changed_lines(diff) == 2  # one + and one -
+    assert count_changed_lines(diff) == 2
 
 
 def test_validate_patch_disallowed_path_and_too_large():
-    # Build a too-large diff affecting a disallowed path
     changes = "\n".join(["+line" for _ in range(205)])
     diff = f"""
 diff --git a/hack.txt b/hack.txt
@@ -40,4 +39,3 @@ index 1111111..2222222 100644
     assert not ok
     assert any("paths not allowed" in r for r in reasons)
     assert any("exceeds max" in r for r in reasons)
-

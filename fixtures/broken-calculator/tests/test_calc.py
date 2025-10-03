@@ -1,5 +1,5 @@
-from calc import add, sub, mul, div
 import pytest
+from calc import add, div, mul, sub
 
 
 def test_add():
@@ -17,4 +17,3 @@ def test_mul():
 def test_div():
     with pytest.raises(ZeroDivisionError):
         _ = div(1, 0)
-

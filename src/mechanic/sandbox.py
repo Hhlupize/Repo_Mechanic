@@ -9,7 +9,7 @@ class Sandbox:
     root: Path
 
     @classmethod
-    def from_path(cls, path: str | Path) -> "Sandbox":
+    def from_path(cls, path: str | Path) -> Sandbox:
         return cls(root=Path(path).resolve())
 
     def within(self, rel: str | Path) -> Path:
@@ -17,4 +17,3 @@ class Sandbox:
         if not str(p).startswith(str(self.root)):
             raise PermissionError("Path escapes sandbox root")
         return p
-

@@ -1,0 +1,6 @@
+* [33m0726b25[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m docs: restore README; add Issues & Roadmap; ci:
+*   [33m21db9e2[m Initial commit
+[32m|[m[33m\[m  
+[32m|[m * [33m5bd88ed[m Initial commit
+* [33m8795534[m style: run pre-commit fixes
+* [33mb9c917d[m chore: add .gitignore, README and fix CI demo steps

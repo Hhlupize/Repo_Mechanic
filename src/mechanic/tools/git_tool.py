@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from .shell import run as shell_run
 
 
-def init_and_commit(msg: str, cwd: str | Path = ".") -> Dict[str, object]:
-    outputs: List[str] = []
-    errors: List[str] = []
+def init_and_commit(msg: str, cwd: str | Path = ".") -> dict[str, object]:
+    outputs: list[str] = []
+    errors: list[str] = []
     code = 0
 
     res_init = shell_run(["git", "rev-parse", "--is-inside-work-tree"], cwd=cwd)
