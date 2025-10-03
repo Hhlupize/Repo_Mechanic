@@ -64,4 +64,3 @@ jobs:
           name: receipts-windows-${{ github.run_id }}
           path: receipts/**
           if-no-files-found: ignore
-

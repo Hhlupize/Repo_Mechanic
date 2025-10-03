@@ -1,0 +1,137 @@
+a “Wizard + Receipts Viewer” that runs locally. Here’s a tight plan that Codex can implement in small steps.
+
+What to add (lightweight but impressive)
+
+Wizard mode (CLI UX)
+
+repo-mechanic wizard
+
+Steps a user through: target repo path → choose --fix-tests / --lint → dry-run vs write → --max-steps.
+
+Shows progress with a nice Rich status bar and ends by opening the latest receipts.
+
+Receipts Viewer (HTML)
+
+Convert your existing summary.md + JSONL into a single summary.html with:
+
+Run metadata (time, flags)
+
+Tool calls and exit codes
+
+Patch diffs in <details> blocks (collapsible)
+
+Before/after test results
+
+Open it automatically at the end of the run.
+
+(Optional, still tiny) Text UI (TUI)
+
+repo-mechanic tui (Textual/Rich)
+
+Left pane: list of runs; Right pane: details/diffs.
+
+Buttons: “Dry-run”, “Apply fixes”, “Re-run tests”.
+
+Skip a full web server unless you want to. If you do, add a single-file FastAPI+HTMX page later.
+
+Minimal changes to your repo
+src/mechanic/
+  ui/
+    __init__.py
+    wizard.py          # guides inputs, calls your existing CLI functions
+    receipts_html.py   # md → html with code blocks & diff styling
+
+Packages to add
+
+(You already have Typer; add Rich and a Markdown converter.)
+
+PowerShell, from repo root:
+
+.\.venv\Scripts\python.exe -m pip install rich markdown-it-py
+
+
+Optional (pretty diffs):
+
+.\.venv\Scripts\python.exe -m pip install pygments
+
+
+If you decide later to do a TUI:
+
+.\.venv\Scripts\python.exe -m pip install textual
+
+Acceptance criteria (keeps Codex focused)
+
+Wizard
+
+repo-mechanic wizard prompts for path & options.
+
+Runs your normal flow (dry-run or write).
+
+On completion, prints the path to the newest receipts and opens the HTML file.
+
+Receipts HTML
+
+Generating receipts/<run>/summary.html from existing summary.md and JSONL.
+
+Collapsible diff sections; monospaced styling; pass/fail badges.
+
+“Open last run” command: repo-mechanic receipts --open-latest.
+
+No regressions
+
+python -m pytest -q still passes.
+
+Step-by-step tasks for Codex (paste these as prompts)
+Task UI-01 — Wizard subcommand
+Create src/mechanic/ui/wizard.py with a function run_wizard(). It should:
+- Prompt for: target_path (default: fixtures/broken-calculator), fix_tests (bool), lint (bool), dry_run (bool), max_steps (int, default 6).
+- Call the same internal functions our CLI uses for dry-run/write.
+- On success, print the receipts folder path.
+
+Wire it into CLI:
+- Add a Typer subcommand: `repo-mechanic wizard` that calls run_wizard().
+- Keep output clean (Rich status spinner + clear section headers).
+
+Provide unified diffs only, then the exact commands to run:
+- .\.venv\Scripts\python.exe -m ruff check .
+- .\.venv\Scripts\python.exe -m black --check .
+- .\.venv\Scripts\python.exe -m pytest -q
+
+Task UI-02 — Receipts HTML generator
+Create src/mechanic/ui/receipts_html.py with function build_html(run_dir: Path) -> Path.
+- Read summary.md and steps.jsonl from the run_dir.
+- Convert markdown to HTML with markdown-it-py.
+- Render a table of tool calls (name, args, exit code).
+- Render unified diffs inside <details><summary>View diff</summary><pre>...</pre></details>.
+- Write summary.html to run_dir and return its Path.
+
+Integrate:
+- After a mechanic run completes, call build_html() and print "HTML: <path>".
+- Add CLI `repo-mechanic receipts --open-latest` to open newest summary.html (use webbrowser.open).
+
+Task UI-03 — TUI (optional)
+Add a minimal Textual app under src/mechanic/ui/tui.py:
+- Left: list recent run directories in receipts/.
+- Right: render summary.md and a list of diffs; pressing Enter toggles a diff view.
+- Add CLI subcommand: `repo-mechanic tui`.
+Keep it under 200 lines.
+
+PowerShell commands you’ll run (one-at-a-time)
+# install extras
+.\.venv\Scripts\python.exe -m pip install rich markdown-it-py
+
+# after Codex patches:
+.\.venv\Scripts\python.exe -m ruff check .
+.\.venv\Scripts\python.exe -m black .
+.\.venv\Scripts\python.exe -m pytest -q
+
+# try the wizard (module form if you didn't add the entrypoint)
+.\.venv\Scripts\python.exe -m mechanic.cli wizard
+
+# dry-run via wizard, pick defaults when prompted
+# then open the latest receipts HTML
+.\.venv\Scripts\python.exe -m mechanic.cli receipts --open-latest
+
+README blurb (for hiring managers)
+
+Wizard + Receipts Viewer: Run repo-mechanic wizard to select a repo and choose dry-run or write mode. The agent plans steps, lints, runs tests, applies minimal patches, and writes a human-readable HTML receipt (diffs, tool calls, before/after). No cloud required.
