@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install uv
+        run: pip install uv
+      - name: Install project (editable)
+        run: uv pip install -e .
+      - name: Ruff
+        run: uv run ruff check .
+      - name: Black
+        run: uv run black --check .
+      - name: Pytest
+        run: uv run pytest -q
+      # Demo step removed: repository contains scripts/demo.ps1 (PowerShell) but no scripts/demo.sh
+      - name: Upload receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: receipts-linux-${{ github.run_id }}
+          path: receipts/**
+          if-no-files-found: ignore
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install uv
+        run: pip install uv
+        shell: pwsh
+      - name: Install project (editable)
+        run: uv pip install -e .
+        shell: pwsh
+      - name: Ruff
+        run: uv run ruff check .
+        shell: pwsh
+      - name: Black
+        run: uv run black --check .
+        shell: pwsh
+      - name: Pytest
+        run: uv run pytest -q
+        shell: pwsh
+      - name: Demo (PowerShell)
+        run: pwsh -File scripts/demo.ps1
+      - name: Upload receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: receipts-windows-${{ github.run_id }}
+          path: receipts/**
+          if-no-files-found: ignore
+
