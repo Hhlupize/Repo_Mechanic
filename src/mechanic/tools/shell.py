@@ -2,10 +2,14 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional
 
 
-def run(cmd: List[str], cwd: Optional[str | Path] = None, timeout: Optional[int] = None, env: Optional[Dict[str, str]] = None) -> Dict[str, object]:
+def run(
+    cmd: list[str],
+    cwd: str | Path | None = None,
+    timeout: int | None = None,
+    env: dict[str, str] | None = None,
+) -> dict[str, object]:
     try:
         proc = subprocess.run(
             cmd,
@@ -20,4 +24,3 @@ def run(cmd: List[str], cwd: Optional[str | Path] = None, timeout: Optional[int]
         return {"code": proc.returncode, "out": proc.stdout, "err": proc.stderr}
     except Exception as e:
         return {"code": -1, "out": "", "err": str(e)}
-

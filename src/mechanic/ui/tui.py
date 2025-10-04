@@ -2,16 +2,16 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 
-def _load_run(dir_path: Path) -> Dict[str, Any]:
-    data: Dict[str, Any] = {"summary": "", "diffs": []}
+def _load_run(dir_path: Path) -> dict[str, Any]:
+    data: dict[str, Any] = {"summary": "", "diffs": []}
     md = dir_path / "summary.md"
     jl = dir_path / "steps.jsonl"
     if md.exists():
         data["summary"] = md.read_text(encoding="utf-8")
-    diffs: List[str] = []
+    diffs: list[str] = []
     if jl.exists():
         for line in jl.read_text(encoding="utf-8").splitlines():
             try:
@@ -27,9 +27,9 @@ def _load_run(dir_path: Path) -> Dict[str, Any]:
 def run_tui() -> None:
     try:
         from textual.app import App, ComposeResult
-        from textual.widgets import Header, Footer, Static, ListView, ListItem, Label
         from textual.containers import Horizontal
         from textual.reactive import reactive
+        from textual.widgets import Footer, Header, Label, ListItem, ListView, Static
     except Exception:
         print("Textual is not installed. Install with: pip install textual")
         return
@@ -41,7 +41,7 @@ def run_tui() -> None:
         .pane { width: 1fr; height: 1fr; }
         """
 
-        runs: reactive[List[Path]] = reactive([])
+        runs: reactive[list[Path]] = reactive([])
         current_index: reactive[int] = reactive(0)
         showing_diff: reactive[bool] = reactive(False)
 
@@ -85,7 +85,15 @@ def run_tui() -> None:
             if not self.showing_diff:
                 summary = info.get("summary", "").strip()
                 diffs = info.get("diffs", [])
-                body = f"[b]Run:[/b] {run}\n\n" + summary + "\n\n[b]Diffs:[/b]\n" + ("\n".join(f"#{i+1} ({len(d)} lines)" for i, d in enumerate(diffs)) or "(none)")
+                body = (
+                    f"[b]Run:[/b] {run}\n\n"
+                    + summary
+                    + "\n\n[b]Diffs:[/b]\n"
+                    + (
+                        "\n".join(f"#{i+1} ({len(d)} lines)" for i, d in enumerate(diffs))
+                        or "(none)"
+                    )
+                )
                 self.right.update(body)
             else:
                 diffs = info.get("diffs", [])
@@ -100,4 +108,3 @@ def run_tui() -> None:
         ]
 
     ReceiptsApp().run()
-

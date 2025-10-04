@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from markdown_it import MarkdownIt
 
 
-def _read_jsonl(path: Path) -> List[Dict[str, Any]]:
-    events: List[Dict[str, Any]] = []
+def _read_jsonl(path: Path) -> list[dict[str, Any]]:
+    events: list[dict[str, Any]] = []
     if not path.exists():
         return events
     for line in path.read_text(encoding="utf-8").splitlines():
@@ -33,8 +33,8 @@ def build_html(run_dir: Path) -> Path:
     summary_html = md.render(summary_md)
     events = _read_jsonl(steps_path)
 
-    tool_rows: List[str] = []
-    diff_blocks: List[str] = []
+    tool_rows: list[str] = []
+    diff_blocks: list[str] = []
 
     for ev in events:
         et = ev.get("type")
@@ -42,9 +42,7 @@ def build_html(run_dir: Path) -> Path:
             name = et
             code = ev.get("code") or ev.get("results")
             args = ev.get("args") or ev.get("actions") or []
-            tool_rows.append(
-                f"<tr><td>{name}</td><td><code>{args}</code></td><td>{code}</td></tr>"
-            )
+            tool_rows.append(f"<tr><td>{name}</td><td><code>{args}</code></td><td>{code}</td></tr>")
         if et == "patch":
             diff = ev.get("diff")
             if diff:
@@ -86,11 +84,7 @@ def build_html(run_dir: Path) -> Path:
 
 
 def _escape(s: str) -> str:
-    return (
-        s.replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-    )
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
 def _coverage_percent(run_dir: Path) -> float | None:
@@ -107,4 +101,3 @@ def _coverage_percent(run_dir: Path) -> float | None:
             except Exception:
                 return None
     return None
-

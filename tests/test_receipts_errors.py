@@ -35,4 +35,3 @@ def test_write_summary_handles_io_errors(monkeypatch, tmp_path: Path):
     ok = run.write_summary("Title", ["line"])
     assert ok is False
     assert run.last_error and "simulated summary error" in run.last_error
-

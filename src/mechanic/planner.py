@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import difflib
 from dataclasses import dataclass
 from pathlib import Path
-import difflib
-from typing import List, Dict, Any
+from typing import Any
+
 from .failure_classifier import classify
 
 
@@ -45,12 +46,12 @@ def _build_replacement_diff(file_path: Path, before: str, after: str) -> str | N
     return "\n".join(diff)
 
 
-def suggest_minimal_fixes(target: Path, failures: List[Dict[str, Any]]) -> List[str]:
+def suggest_minimal_fixes(target: Path, failures: list[dict[str, Any]]) -> list[str]:
     """Heuristic suggestions based on simple failure categories.
 
     Currently recognizes the broken-calculator fixture patterns and a few generic cases.
     """
-    diffs: List[str] = []
+    diffs: list[str] = []
     # Broken calculator fixture: fix sub/add and div/*
     calc = target / "calc" / "__init__.py"
     d1 = _build_replacement_diff(

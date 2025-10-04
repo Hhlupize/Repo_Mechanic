@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Dict
-
 
 def classify(message: str) -> str:
     m = message or ""
@@ -16,4 +14,3 @@ def classify(message: str) -> str:
     if "AssertionError" in m or "assert" in m:
         return "Assertion"
     return "Unknown"
-

@@ -5,14 +5,13 @@ from pathlib import Path
 
 import typer
 
-from .receipts import ReceiptRun
-from .tools import ruff_tool, black_tool, pytest_tool
-from .planner import simple_plan, suggest_minimal_fixes
 from .patches import apply_patch
+from .planner import simple_plan, suggest_minimal_fixes
+from .receipts import ReceiptRun
+from .tools import black_tool, pytest_tool, ruff_tool
 from .tools.shell import run as shell_run
-from .ui.wizard import run_wizard
 from .ui.receipts_html import build_html
-
+from .ui.wizard import run_wizard
 
 app = typer.Typer(
     add_completion=False,
@@ -37,9 +36,7 @@ def run_core(
         False, "--fix-tests", help="Attempt to plan/patch for failing tests"
     ),
     lint: bool = typer.Option(False, "--lint", help="Run ruff/black checks"),
-    dry_run: bool = typer.Option(
-        True, "--dry-run/--write", help="Plan only vs apply changes"
-    ),
+    dry_run: bool = typer.Option(True, "--dry-run/--write", help="Plan only vs apply changes"),
     max_steps: int = typer.Option(10, "--max-steps", help="Maximum steps to attempt"),
 ) -> None:
     """Plan fixes for a small Python repo and write receipts."""
@@ -76,11 +73,27 @@ def run_core(
     if lint:
         rr = ruff_tool.run(target)
         br = black_tool.run(target, check=True)
-        run.log_event({"type": "lint", "results": {"ruff": rr.get("code"), "black": br.get("code")}, "ruff": rr, "black": br})
+        run.log_event(
+            {
+                "type": "lint",
+                "results": {"ruff": rr.get("code"), "black": br.get("code")},
+                "ruff": rr,
+                "black": br,
+            }
+        )
 
     # Test + plan stage
     before = pytest_tool.run(target)
-    run.log_event({"type": "pytest", "phase": "before", "code": before.get("code"), "failures": before.get("failures", []), "out": before.get("out"), "err": before.get("err")})
+    run.log_event(
+        {
+            "type": "pytest",
+            "phase": "before",
+            "code": before.get("code"),
+            "failures": before.get("failures", []),
+            "out": before.get("out"),
+            "err": before.get("err"),
+        }
+    )
 
     applied: list[str] = []
     snapshot_sha: str | None = None
@@ -88,28 +101,41 @@ def run_core(
         diffs = suggest_minimal_fixes(target, failures=before.get("failures", []) or [])
         if not dry_run:
             shell_run(["git", "add", "-A"], cwd=Path.cwd())
-            c = shell_run(["git", "commit", "-m", "chore(mechanic): pre-patch snapshot"], cwd=Path.cwd())
+            c = shell_run(
+                ["git", "commit", "-m", "chore(mechanic): pre-patch snapshot"], cwd=Path.cwd()
+            )
             if int(c.get("code", 1)) == 0:
                 h = shell_run(["git", "rev-parse", "HEAD"], cwd=Path.cwd())
                 if int(h.get("code", 1)) == 0:
                     snapshot_sha = h.get("out", "").strip()
         for i, diff in enumerate(diffs[:max_steps]):
             res = apply_patch(diff, root=Path.cwd(), dry_run=dry_run)
-            run.log_event({
-                "type": "patch",
-                "index": i,
-                "ok": res.ok,
-                "files": res.files,
-                "lines": res.changed_lines,
-                "dry_run": dry_run,
-                "reasons": res.reasons,
-                "diff": diff,
-            })
+            run.log_event(
+                {
+                    "type": "patch",
+                    "index": i,
+                    "ok": res.ok,
+                    "files": res.files,
+                    "lines": res.changed_lines,
+                    "dry_run": dry_run,
+                    "reasons": res.reasons,
+                    "diff": diff,
+                }
+            )
             if res.ok:
                 applied.extend(res.files)
 
     after = pytest_tool.run(target)
-    run.log_event({"type": "pytest", "phase": "after", "code": after.get("code"), "failures": after.get("failures", []), "out": after.get("out"), "err": after.get("err")})
+    run.log_event(
+        {
+            "type": "pytest",
+            "phase": "after",
+            "code": after.get("code"),
+            "failures": after.get("failures", []),
+            "out": after.get("out"),
+            "err": after.get("err"),
+        }
+    )
 
     # Auto-revert on regression in write mode
     if not dry_run and snapshot_sha is not None:
@@ -117,7 +143,15 @@ def run_core(
         after_n = len(after.get("failures", []) or [])
         if after_n > before_n:
             r = shell_run(["git", "reset", "--hard", f"{snapshot_sha}~0"], cwd=Path.cwd())
-            run.log_event({"type": "revert", "snapshot": snapshot_sha, "ok": int(r.get("code", 1)) == 0, "exit": r.get("code"), "err": r.get("err")})
+            run.log_event(
+                {
+                    "type": "revert",
+                    "snapshot": snapshot_sha,
+                    "ok": int(r.get("code", 1)) == 0,
+                    "exit": r.get("code"),
+                    "err": r.get("err"),
+                }
+            )
 
     # Build HTML receipts and finish
     html = build_html(run.run_dir)
@@ -153,8 +187,11 @@ def wizard() -> None:
 
 
 @app.command(help="Open the latest receipts HTML")
-def receipts(open_latest: bool = typer.Option(True, "--open-latest", help="Open newest run HTML")) -> None:
+def receipts(
+    open_latest: bool = typer.Option(True, "--open-latest", help="Open newest run HTML")
+) -> None:
     import webbrowser
+
     root = Path("receipts")
     if not root.exists():
         typer.echo("No receipts yet.")

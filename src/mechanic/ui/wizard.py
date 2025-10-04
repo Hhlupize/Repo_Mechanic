@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from pathlib import Path
-import sys
 import subprocess
+import sys
+from pathlib import Path
 
 from rich.console import Console
 from rich.prompt import Confirm, IntPrompt, Prompt
 from rich.status import Status
-
 
 console = Console()
 
@@ -39,4 +38,3 @@ def run_wizard() -> None:
         subprocess.run(args, check=False)
 
     console.print("[bold green]Done.[/bold green]")
-

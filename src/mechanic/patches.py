@@ -5,7 +5,6 @@ from pathlib import Path
 
 from .guards import affected_paths, count_changed_lines, validate_patch
 from .tools.shell import run as shell_run
-from typing import List, Tuple, Optional
 
 
 @dataclass
@@ -36,7 +35,10 @@ def apply_patch(unified_diff: str, root: Path | str = ".", dry_run: bool = True)
             p = root_path / f
             before_contents[f] = p.read_text(encoding="utf-8") if p.exists() else None
 
-        res = shell_run(["git", "apply", "--ignore-space-change", "--whitespace=nowarn", str(tmp_patch)], cwd=root_path)
+        res = shell_run(
+            ["git", "apply", "--ignore-space-change", "--whitespace=nowarn", str(tmp_patch)],
+            cwd=root_path,
+        )
         if int(res.get("code", 1)) == 0:
             # Verify changes actually occurred
             changed_any = False
@@ -52,6 +54,7 @@ def apply_patch(unified_diff: str, root: Path | str = ".", dry_run: bool = True)
         replacements = _extract_replacements(unified_diff)
         reasons = [str(res.get("err", "git apply failed"))]
         import re
+
         for fpath, ctx, old, new in replacements:
             p = root_path / fpath
             if not p.exists():
@@ -105,17 +108,17 @@ def apply_patch(unified_diff: str, root: Path | str = ".", dry_run: bool = True)
             pass
 
 
-def _extract_replacements(unified_diff: str) -> List[Tuple[str, Optional[str], str, str]]:
+def _extract_replacements(unified_diff: str) -> list[tuple[str, str | None, str, str]]:
     """Extract simple single-line replacements with optional preceding context line.
 
     Returns tuples of (file_path, context_line, old_line, new_line).
     context_line is typically a function signature like 'def sub(a, b):'.
     """
-    replacements: List[Tuple[str, Optional[str], str, str]] = []
+    replacements: list[tuple[str, str | None, str, str]] = []
     current_file: str | None = None
     old_line: str | None = None
     new_line: str | None = None
-    last_context: Optional[str] = None
+    last_context: str | None = None
     for line in unified_diff.splitlines():
         if line.startswith("+++ "):
             b = line.split(maxsplit=1)[1]
