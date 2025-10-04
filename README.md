@@ -73,9 +73,9 @@ Optional TUI:
   - It writes receipts and makes the fixture tests green for demonstration.
   - Windows: `pwsh -File scripts/demo.ps1`
 
-### Before/After (Asciinema)
-- Watch a short terminal cast showing the broken fixture, planning, and minimal patches:
-- Demo: https://asciinema.org/a/repo-mechanic-demo
+### Recording (Coming Soon)
+- A short terminal cast will show the broken fixture, planning, and minimal patches.
+- If you record one (asciinema, VHS, or GIF), replace this note with the link.
 
 ### Receipts Sample Path
 - After a run, find outputs under a timestamped folder, e.g.:
