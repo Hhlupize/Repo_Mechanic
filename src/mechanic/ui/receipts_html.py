@@ -55,6 +55,12 @@ def build_html(run_dir: Path) -> Path:
                 )
                 diff_blocks.append(diff_html)
 
+    # Optional coverage percent
+    cov_html = ""
+    cov = _coverage_percent(run_dir)
+    if cov is not None:
+        cov_html = f"<p><strong>Coverage:</strong> {cov:.2f}%</p>"
+
     table_html = (
         "<table border='1' cellpadding='6' cellspacing='0'>"
         "<thead><tr><th>Tool</th><th>Args/Actions</th><th>Exit/Result</th></tr></thead>"
@@ -67,7 +73,7 @@ def build_html(run_dir: Path) -> Path:
         "<style>body{font-family:Arial,Helvetica,sans-serif;margin:24px} code,pre{font-family:Consolas,monospace}</style>"
         "</head><body>"
         "<h1>Repo Mechanic Receipt</h1>"
-        f"<section>{summary_html}</section>"
+        f"<section>{summary_html}{cov_html}</section>"
         "<h2>Tool Calls</h2>"
         f"{table_html}"
         "<h2>Patches</h2>"
@@ -85,4 +91,20 @@ def _escape(s: str) -> str:
         .replace("<", "&lt;")
         .replace(">", "&gt;")
     )
+
+
+def _coverage_percent(run_dir: Path) -> float | None:
+    # Prefer coverage.xml in run_dir; fallback to repo root
+    for p in (run_dir / "coverage.xml", Path("coverage.xml")):
+        if p.exists():
+            try:
+                txt = p.read_text(encoding="utf-8")
+                import re
+
+                m = re.search(r"line-rate=\"([0-9.]+)\"", txt)
+                if m:
+                    return float(m.group(1)) * 100.0
+            except Exception:
+                return None
+    return None
 

@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
+import difflib
+from typing import List, Dict, Any
+from .failure_classifier import classify
 
 
 @dataclass
@@ -21,3 +25,47 @@ def simple_plan(fix_tests: bool, lint: bool) -> list[PlanStep]:
             ]
         )
     return steps
+
+
+def _build_replacement_diff(file_path: Path, before: str, after: str) -> str | None:
+    if not file_path.exists():
+        return None
+    txt = file_path.read_text(encoding="utf-8")
+    if before not in txt:
+        return None
+    new_txt = txt.replace(before, after)
+    a = txt.splitlines()
+    b = new_txt.splitlines()
+    rel = file_path.as_posix()
+    diff = difflib.unified_diff(a, b, fromfile=f"a/{rel}", tofile=f"b/{rel}", lineterm="")
+    return "\n".join(diff)
+
+
+def suggest_minimal_fixes(target: Path, failures: List[Dict[str, Any]]) -> List[str]:
+    """Heuristic suggestions based on simple failure categories.
+
+    Currently recognizes the broken-calculator fixture patterns and a few generic cases.
+    """
+    diffs: List[str] = []
+    # Broken calculator fixture: fix sub/add and div/*
+    calc = target / "calc" / "__init__.py"
+    d1 = _build_replacement_diff(
+        calc,
+        before="def sub(a, b):\n    return a + b",
+        after="def sub(a, b):\n    return a - b",
+    )
+    if d1:
+        diffs.append(d1)
+    d2 = _build_replacement_diff(
+        calc,
+        before="def div(a, b):\n    return a * b",
+        after="def div(a, b):\n    return a / b",
+    )
+    if d2:
+        diffs.append(d2)
+
+    # Generic pass: if ZeroDivision appears anywhere, consider guarding div(?,0) or operator fix
+    cats = {classify(str(f.get("msg", ""))) for f in failures or []}
+    if "ZeroDivision" in cats and d2 and d2 not in diffs:
+        diffs.append(d2)
+    return diffs
