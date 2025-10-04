@@ -3,8 +3,6 @@
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -58,6 +56,14 @@ jobs:
           name: receipts-linux-${{ github.run_id }}
           path: receipts/**
           if-no-files-found: ignore
+      - name: Show latest receipts
+        run: |
+          if [ -d receipts ]; then
+            LATEST=$(ls -1 receipts/*/summary.md 2>/dev/null | tail -n 1 || true)
+            echo "Latest summary: ${LATEST:-none}"
+          else
+            echo "No receipts dir"
+          fi
 
   windows:
     runs-on: windows-latest
@@ -113,3 +119,10 @@ jobs:
           name: receipts-windows-${{ github.run_id }}
           path: receipts/**
           if-no-files-found: ignore
+      - name: Show latest receipts
+        run: |
+          if (Test-Path receipts) {
+            $f = Get-ChildItem receipts -Recurse -Filter summary.md | Sort-Object FullName | Select-Object -Last 1
+            if ($f) { Write-Host "Latest summary:" $f.FullName } else { Write-Host "No summary found" }
+          } else { Write-Host "No receipts dir" }
+        shell: pwsh
