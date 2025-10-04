@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
+import sys
+import subprocess
 
-import typer
 from rich.console import Console
 from rich.prompt import Confirm, IntPrompt, Prompt
 from rich.status import Status
-
-from mechanic.cli import cli as run_core  # reuse underlying logic via Typer callback
 
 
 console = Console()
@@ -25,18 +23,20 @@ def run_wizard() -> None:
     max_steps = IntPrompt.ask("Max steps", default=6)
 
     with Status("Running Repo Mechanic...", console=console):
-        # Call into the same CLI callback to ensure one code path
-        try:
-            run_core(
-                path=str(target),
-                fix_tests=fix_tests,
-                lint=lint,
-                dry_run=dry_run,
-                max_steps=max_steps,
-            )
-        except typer.Exit:
-            # bubbled exit from CLI; already printed message
-            pass
+        args = [
+            sys.executable,
+            "-m",
+            "mechanic.cli",
+            "run",
+            str(target),
+        ]
+        if fix_tests:
+            args.append("--fix-tests")
+        if lint:
+            args.append("--lint")
+        args.append("--dry-run" if dry_run else "--write")
+        args += ["--max-steps", str(max_steps)]
+        subprocess.run(args, check=False)
 
     console.print("[bold green]Done.[/bold green]")
 

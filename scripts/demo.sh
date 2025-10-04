@@ -15,10 +15,10 @@ echo "[demo] Installing package in editable mode"
 $UV pip install -e .
 
 echo "[demo] Running repo-mechanic (dry run) on fixture"
-$UV run repo-mechanic fixtures/broken-calculator --fix-tests --lint --dry-run --max-steps 2 || true
+$UV run repo-mechanic run fixtures/broken-calculator --fix-tests --lint --dry-run --max-steps 2 || true
 
 echo "[demo] Applying minimal fixes via CLI (write mode)"
-$UV run repo-mechanic fixtures/broken-calculator --fix-tests --write --max-steps 2
+$UV run repo-mechanic run fixtures/broken-calculator --fix-tests --write --max-steps 2
 
 echo "[demo] Running fixture tests"
 $UV run pytest -q fixtures/broken-calculator
