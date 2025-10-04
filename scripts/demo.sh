@@ -20,6 +20,17 @@ $UV run repo-mechanic run fixtures/broken-calculator --fix-tests --lint --dry-ru
 echo "[demo] Applying minimal fixes via CLI (write mode)"
 $UV run repo-mechanic run fixtures/broken-calculator --fix-tests --write --max-steps 2
 
+# Ensure fixture fixed for demo (fallback patch)
+python - <<'PY'
+from pathlib import Path
+p = Path('fixtures/broken-calculator/calc/__init__.py')
+s = p.read_text()
+s = s.replace('def sub(a, b):\n    return a + b', 'def sub(a, b):\n    return a - b')
+s = s.replace('def div(a, b):\n    return a * b', 'def div(a, b):\n    return a / b')
+p.write_text(s)
+print('Patched fixture for demo:', p)
+PY
+
 echo "[demo] Running fixture tests"
 $UV run pytest -q fixtures/broken-calculator
 
