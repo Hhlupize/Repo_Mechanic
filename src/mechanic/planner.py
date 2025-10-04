@@ -36,7 +36,11 @@ def _build_replacement_diff(file_path: Path, before: str, after: str) -> str | N
     new_txt = txt.replace(before, after)
     a = txt.splitlines()
     b = new_txt.splitlines()
-    rel = file_path.as_posix()
+    try:
+        rel_path = file_path.resolve().relative_to(Path.cwd().resolve())
+    except Exception:
+        rel_path = file_path
+    rel = rel_path.as_posix()
     diff = difflib.unified_diff(a, b, fromfile=f"a/{rel}", tofile=f"b/{rel}", lineterm="")
     return "\n".join(diff)
 
