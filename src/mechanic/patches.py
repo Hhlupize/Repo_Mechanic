@@ -30,9 +30,24 @@ def apply_patch(unified_diff: str, root: Path | str = ".", dry_run: bool = True)
     tmp_patch = root_path / ".mechanic.patch"
     tmp_patch.write_text(unified_diff, encoding="utf-8")
     try:
+        # Snapshot pre-contents
+        before_contents = {}
+        for f in files:
+            p = root_path / f
+            before_contents[f] = p.read_text(encoding="utf-8") if p.exists() else None
+
         res = shell_run(["git", "apply", "--ignore-space-change", "--whitespace=nowarn", str(tmp_patch)], cwd=root_path)
         if int(res.get("code", 1)) == 0:
-            return PatchResult(ok=True, changed_lines=changed, files=files, reasons=[])
+            # Verify changes actually occurred
+            changed_any = False
+            for f in files:
+                p = root_path / f
+                after = p.read_text(encoding="utf-8") if p.exists() else None
+                if after is not None and after != before_contents.get(f):
+                    changed_any = True
+                    break
+            if changed_any:
+                return PatchResult(ok=True, changed_lines=changed, files=files, reasons=[])
         # Fallback: apply simple +/- single-line replacements directly
         replacements = _extract_replacements(unified_diff)
         reasons = [str(res.get("err", "git apply failed"))]
