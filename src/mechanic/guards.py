@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-ALLOWLIST_PREFIXES = ("src/", "tests/", "fixtures/")
-MAX_PATCH_LINES = 200
+from .config import get_config
 
 
 def is_path_allowed(path: str) -> bool:
     norm = path.replace("\\", "/").lstrip("./")
-    return any(norm.startswith(prefix) for prefix in ALLOWLIST_PREFIXES)
+    cfg = get_config()
+    return any(norm.startswith(prefix) for prefix in cfg.allowlist_prefixes)
 
 
 def affected_paths(unified_diff: str) -> set[str]:
@@ -43,6 +43,7 @@ def validate_patch(unified_diff: str) -> tuple[bool, list[str]]:
     if disallowed:
         reasons.append(f"paths not allowed: {', '.join(disallowed)}")
     changed = count_changed_lines(unified_diff)
-    if changed > MAX_PATCH_LINES:
-        reasons.append(f"changed lines {changed} exceeds max {MAX_PATCH_LINES}")
+    max_lines = get_config().max_patch_lines
+    if changed > max_lines:
+        reasons.append(f"changed lines {changed} exceeds max {max_lines}")
     return (len(reasons) == 0, reasons)

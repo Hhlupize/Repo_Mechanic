@@ -33,8 +33,15 @@ jobs:
         run: python -m uv run ruff check .
       - name: Black
         run: python -m uv run black --check .
-      - name: Pytest
-        run: python -m uv run pytest -q
+      - name: Pytest (with coverage)
+        run: python -m uv run pytest -q --cov=src --cov-report=term-missing --cov-report=xml
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-linux-${{ github.run_id }}
+          path: coverage.xml
+          if-no-files-found: ignore
       - name: Demo
         run: bash scripts/demo.sh
       - name: Upload receipts
@@ -73,9 +80,16 @@ jobs:
       - name: Black
         run: python -m uv run black --check .
         shell: pwsh
-      - name: Pytest
-        run: python -m uv run pytest -q
+      - name: Pytest (with coverage)
+        run: python -m uv run pytest -q --cov=src --cov-report=term-missing --cov-report=xml
         shell: pwsh
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-windows-${{ github.run_id }}
+          path: coverage.xml
+          if-no-files-found: ignore
       - name: Demo (PowerShell)
         run: pwsh -File scripts/demo.ps1
       - name: Upload receipts

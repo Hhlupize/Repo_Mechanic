@@ -8,6 +8,7 @@ authors = [{ name = "Repo Mechanic" }]
 dependencies = [
   "typer>=0.12",
   "pytest>=7.0",
+  "pytest-cov>=4.0",
   "ruff>=0.5",
   "black>=24.0",
 ]
@@ -26,4 +27,3 @@ target-version = ["py311"]
 line-length = 100
 target-version = "py311"
 lint.select = ["E", "F", "I", "UP"]
-
