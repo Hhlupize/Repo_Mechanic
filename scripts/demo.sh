@@ -23,12 +23,29 @@ $UV run repo-mechanic run fixtures/broken-calculator --fix-tests --write --max-s
 # Ensure fixture fixed for demo (fallback patch)
 python - <<'PY'
 from pathlib import Path
+import re
+
 p = Path('fixtures/broken-calculator/calc/__init__.py')
-s = p.read_text()
-s = s.replace('def sub(a, b):\n    return a + b', 'def sub(a, b):\n    return a - b')
-s = s.replace('def div(a, b):\n    return a * b', 'def div(a, b):\n    return a / b')
-p.write_text(s)
-print('Patched fixture for demo:', p)
+text = p.read_text(encoding='utf-8')
+
+# Robust replacements that tolerate CRLF/LF and variable spaces
+sub_pat = re.compile(r"(def sub\(a, b\):\r?\n)([\t ]*)return a \+ b")
+div_pat = re.compile(r"(def div\(a, b\):\r?\n)([\t ]*)return a \* b")
+
+def sub_repl(m):
+    return f"{m.group(1)}{m.group(2)}return a - b"
+
+def div_repl(m):
+    return f"{m.group(1)}{m.group(2)}return a / b"
+
+new = sub_pat.sub(sub_repl, text, count=1)
+new = div_pat.sub(div_repl, new, count=1)
+
+if new != text:
+    p.write_text(new, encoding='utf-8')
+    print('Patched fixture for demo:', p)
+else:
+    print('No fallback patch applied (patterns not found).')
 PY
 
 echo "[demo] Running fixture tests"
