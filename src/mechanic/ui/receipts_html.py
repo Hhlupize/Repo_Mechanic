@@ -46,10 +46,12 @@ def build_html(run_dir: Path) -> Path:
         if et == "patch":
             diff = ev.get("diff")
             if diff:
+                pre = _escape(diff)
                 diff_html = (
                     "<details><summary>View diff</summary>"
-                    f"<pre style='background:#111;color:#eee;padding:8px;overflow:auto'>{_escape(diff)}</pre>"
-                    "</details>"
+                    "<pre style='background:#111;color:#eee;padding:8px;overflow:auto'>"
+                    f"{pre}"
+                    "</pre></details>"
                 )
                 diff_blocks.append(diff_html)
 
@@ -59,24 +61,29 @@ def build_html(run_dir: Path) -> Path:
     if cov is not None:
         cov_html = f"<p><strong>Coverage:</strong> {cov:.2f}%</p>"
 
+    rows = "".join(tool_rows) if tool_rows else "<tr><td colspan=3>(no tools logged)</td></tr>"
     table_html = (
         "<table border='1' cellpadding='6' cellspacing='0'>"
         "<thead><tr><th>Tool</th><th>Args/Actions</th><th>Exit/Result</th></tr></thead>"
-        f"<tbody>{''.join(tool_rows) if tool_rows else '<tr><td colspan=3>(no tools logged)</td></tr>'}</tbody>"
+        f"<tbody>{rows}</tbody>"
         "</table>"
     )
 
-    body = (
+    head = (
         "<html><head><meta charset='utf-8'><title>Repo Mechanic Receipts</title>"
-        "<style>body{font-family:Arial,Helvetica,sans-serif;margin:24px} code,pre{font-family:Consolas,monospace}</style>"
+        "<style>body{font-family:Arial,Helvetica,sans-serif;margin:24px}"
+        " code,pre{font-family:Consolas,monospace}</style>"
         "</head><body>"
-        "<h1>Repo Mechanic Receipt</h1>"
-        f"<section>{summary_html}{cov_html}</section>"
-        "<h2>Tool Calls</h2>"
-        f"{table_html}"
-        "<h2>Patches</h2>"
-        f"{''.join(diff_blocks) if diff_blocks else '<p>(no patch diffs)</p>'}"
-        "</body></html>"
+    )
+    body = (
+        head
+        + "<h1>Repo Mechanic Receipt</h1>"
+        + f"<section>{summary_html}{cov_html}</section>"
+        + "<h2>Tool Calls</h2>"
+        + table_html
+        + "<h2>Patches</h2>"
+        + ("".join(diff_blocks) if diff_blocks else "<p>(no patch diffs)</p>")
+        + "</body></html>"
     )
 
     html_path.write_text(body, encoding="utf-8")
