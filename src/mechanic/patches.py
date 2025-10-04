@@ -5,7 +5,7 @@ from pathlib import Path
 
 from .guards import affected_paths, count_changed_lines, validate_patch
 from .tools.shell import run as shell_run
-from typing import Dict, List, Tuple
+from typing import List, Tuple, Optional
 
 
 @dataclass
@@ -36,18 +36,39 @@ def apply_patch(unified_diff: str, root: Path | str = ".", dry_run: bool = True)
         # Fallback: apply simple +/- single-line replacements directly
         replacements = _extract_replacements(unified_diff)
         reasons = [str(res.get("err", "git apply failed"))]
-        for fpath, old, new in replacements:
+        for fpath, ctx, old, new in replacements:
             p = root_path / fpath
             if not p.exists():
                 reasons.append(f"missing file: {fpath}")
                 continue
             text = p.read_text(encoding="utf-8")
-            if old in text:
-                text2 = text.replace(old, new)
-                p.write_text(text2, encoding="utf-8")
-            elif old.replace("\n", "\r\n") in text:
-                text2 = text.replace(old.replace("\n", "\r\n"), new.replace("\n", "\r\n"))
-                p.write_text(text2, encoding="utf-8")
+            replaced = False
+            if ctx:
+                # Try context-bound replacement first
+                pattern_unix = f"{ctx}\n{old}"
+                replacement_unix = f"{ctx}\n{new}"
+                if pattern_unix in text:
+                    text = text.replace(pattern_unix, replacement_unix, 1)
+                    replaced = True
+                else:
+                    pattern_crlf = pattern_unix.replace("\n", "\r\n")
+                    replacement_crlf = replacement_unix.replace("\n", "\r\n")
+                    if pattern_crlf in text:
+                        text = text.replace(pattern_crlf, replacement_crlf, 1)
+                        replaced = True
+            if not replaced:
+                # Fallback to single-line replace, once
+                if old in text:
+                    text = text.replace(old, new, 1)
+                    replaced = True
+                else:
+                    old_crlf = old.replace("\n", "\r\n")
+                    new_crlf = new.replace("\n", "\r\n")
+                    if old_crlf in text:
+                        text = text.replace(old_crlf, new_crlf, 1)
+                        replaced = True
+            if replaced:
+                p.write_text(text, encoding="utf-8")
             else:
                 reasons.append(f"pattern not found in {fpath}")
         return PatchResult(ok=True, changed_lines=changed, files=files, reasons=reasons)
@@ -58,11 +79,17 @@ def apply_patch(unified_diff: str, root: Path | str = ".", dry_run: bool = True)
             pass
 
 
-def _extract_replacements(unified_diff: str) -> List[Tuple[str, str, str]]:
-    replacements: List[Tuple[str, str, str]] = []
+def _extract_replacements(unified_diff: str) -> List[Tuple[str, Optional[str], str, str]]:
+    """Extract simple single-line replacements with optional preceding context line.
+
+    Returns tuples of (file_path, context_line, old_line, new_line).
+    context_line is typically a function signature like 'def sub(a, b):'.
+    """
+    replacements: List[Tuple[str, Optional[str], str, str]] = []
     current_file: str | None = None
     old_line: str | None = None
     new_line: str | None = None
+    last_context: Optional[str] = None
     for line in unified_diff.splitlines():
         if line.startswith("+++ "):
             b = line.split(maxsplit=1)[1]
@@ -71,17 +98,22 @@ def _extract_replacements(unified_diff: str) -> List[Tuple[str, str, str]]:
             current_file = b
             old_line = None
             new_line = None
+            last_context = None
             continue
         if line.startswith("@@"):
             old_line = None
             new_line = None
+            last_context = None
             continue
         if line.startswith("-") and not line.startswith("--- "):
             old_line = line[1:]
         elif line.startswith("+") and not line.startswith("+++ "):
             new_line = line[1:]
+        elif not line.startswith(("diff ", "index ", "--- ", "+++ ", "@@", "+", "-")):
+            # context line
+            last_context = line
         if current_file and old_line is not None and new_line is not None:
-            replacements.append((current_file, old_line, new_line))
+            replacements.append((current_file, last_context, old_line, new_line))
             old_line = None
             new_line = None
     return replacements
